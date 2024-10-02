@@ -1,0 +1,92 @@
+version: '3.9'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  app-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: lab4
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./volumes/app-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  monolith:
+    build:
+      context: ./monolith
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      app-db:
+        condition: service_healthy
+    environment:
+      db: postgresql://postgres:admin@app-db:5432/lab4
+      host: localhost
+      port: 3000
+      api_version: v1
+      authUrl: http://user_auth_service:9191/user_auth_service/v1/
+      infoUrl: http://user_info_service:9595/user_info_service/v1/
+    volumes:
+      - ./monolith:/usr/src/monolith:cached
+      - /usr/src/monolith/node_modules
+    networks:
+      - app-network
+
+  user_info_service:
+    build:
+      context: ./user_info_service
+      dockerfile: Dockerfile
+    ports:
+      - "9595:9090"
+    depends_on:
+      app-db:
+        condition: service_healthy
+      monolith:
+        condition: service_started
+    environment:
+      db: postgresql://postgres:admin@app-db:5432/lab4
+      host: localhost
+      port: 9595
+      api_version: v1
+    volumes:
+      - ./user_info_service:/usr/src/user_info_service:cached
+      - /usr/src/user_info_service/node_modules
+    networks:
+      - app-network
+
+  user_auth_service:
+    build:
+      context: ./user_auth_service
+      dockerfile: Dockerfile
+    ports:
+      - "9191:9090"
+    depends_on:
+      app-db:
+        condition: service_healthy
+      monolith:
+        condition: service_started
+
+    environment:
+      db: postgresql://postgres:admin@app-db:5432/lab4
+      host: localhost
+      port: 9191
+      api_version: v1
+    volumes:
+      - ./user_auth_service:/usr/src/user_auth_service:cached
+      - /usr/src/user_auth_service/node_modules
+    networks:
+      - app-network
