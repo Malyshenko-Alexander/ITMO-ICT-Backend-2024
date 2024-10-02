@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize-typescript"
 import User from "../models/user/User"
+import Product from "../models/product/Product";
 
 
 const sequelize: Sequelize = new Sequelize({
@@ -12,7 +13,7 @@ const sequelize: Sequelize = new Sequelize({
     repositoryMode: true
 })
 
-const models = [User]
+const models = [User, Product]
 
 sequelize.addModels(models)
 sequelize.sync()

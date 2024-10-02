@@ -3,12 +3,12 @@ import UserController from "../../controllers/user/userController"
 import UserService from "../../services/user/userService";
 
 const controller = new UserController(new UserService());
-const router = express.Router();
+const userRoutes = express.Router();
 
-router.route("/").post(controller.post);
-router.route("/").get(controller.getAll);
-router.route("/:user_id").get(controller.get);
-router.route("/:user_id").put(controller.update);
-router.route("/:user_id").delete(controller.delete);
+userRoutes.route("/").post(controller.post);
+userRoutes.route("/").get(controller.getAll);
+userRoutes.route("/:user_id").get(controller.get);
+userRoutes.route("/:user_id").put(controller.update);
+userRoutes.route("/:user_id").delete(controller.delete);
 
-export default router
+export default userRoutes
